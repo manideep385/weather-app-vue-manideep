@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, computed,provide } from 'vue'
+import { ref, onMounted, computed, provide } from 'vue'
 import { getWeatherByCity, getWeatherByCoords, getForecastByCity } from './services/weatherService';
 import WeatherMap from './components/WeatherMap.vue';
 import { watch } from 'vue';
@@ -71,11 +71,11 @@ const getWeatherByLocation = async () => {
   )
 }
 
-let  debounceTimer = null
-const  debouncedSearch =()=>{
+let debounceTimer = null
+const debouncedSearch = () => {
   clearTimeout(debounceTimer)
-  debounceTimer=setTimeout(() => {
-    if(city.value.trim()){
+  debounceTimer = setTimeout(() => {
+    if (city.value.trim()) {
       searchWeather()
     }
   }, 600);
@@ -83,69 +83,132 @@ const  debouncedSearch =()=>{
 onMounted(() => {
   getWeatherByLocation()
 })
-const toggleTheme = ()=>{
-  theme.value= theme.value === "dark" ? "light" :"dark"
+const toggleTheme = () => {
+  theme.value = theme.value === "dark" ? "light" : "dark"
 }
-provide("theme",theme)
-provide("toggleTheme",toggleTheme)
+provide("theme", theme)
+provide("toggleTheme", toggleTheme)
 
-watch(theme,(newTheme)=>{
-document.body.setAttribute("data-theme",newTheme)
-localStorage.setItem("theme",newTheme)
-},{immediate:true})
+watch(theme, (newTheme) => {
+  document.body.setAttribute("data-theme", newTheme)
+  localStorage.setItem("theme", newTheme)
+}, { immediate: true })
 
 const savedTheme = localStorage.getItem("theme")
-if(savedTheme){
+if (savedTheme) {
   theme.value = savedTheme
 }
+
+const weatherHighlights = computed(() => {
+  if (!weather.value) return null
+
+  return [
+    { label: "Min Temp", value: `${weather.value.main.temp_min} °C`, icon: "🌡️" },
+    { label: "Max Temp", value: `${weather.value.main.temp_max} °C`, icon: "🔥" },
+    { label: "Humidity", value: `${weather.value.main.humidity}%`, icon: "💧" },
+    { label: "Wind", value: `${weather.value.wind.speed} m/s`, icon: "🌬️" },
+    { label: "Clouds", value: `${weather.value.clouds.all}%`, icon: "☁️" },
+  ]
+})
+
+const hourlyForecast = computed(() => {
+  if (!forecast.value) return []
+
+  return forecast.value.list.slice(0, 8).map(item => ({
+    time: item.dt_txt,
+    temp: item.main.temp,
+    icon: item.weather[0].icon,
+    description: item.weather[0].description,
+  }))
+})
+watch(hourlyForecast, (val) => {
+  console.log("Hourly forecast:", val)
+})
+
 </script>
 
 <template>
   <button class="theme-toggle" @click="toggleTheme">
-  {{ theme === "dark" ? "☀️ Light" : "🌙 Dark" }}
-</button>
+    {{ theme === "dark" ? "☀️ Light" : "🌙 Dark" }}
+  </button>
 
-   <div class="search-div">
-  <input v-model="city" @keyup.enter="searchWeather" @input="debouncedSearch" class="input-box"/>
-  <button :disabled="loading" @click="searchWeather">  {{ loading ? "Loading..." : "Search" }}</button>
+  <div class="search-div">
+    <input v-model="city" @keyup.enter="searchWeather" @input="debouncedSearch" class="input-box" />
+    <button :disabled="loading" @click="searchWeather"> {{ loading ? "Loading..." : "Search" }}</button>
   </div>
   <div v-if="loading" class="loading">
-  <div class="spinner"></div>
-  <div>Fetching weather...</div>
-</div>
+    <div class="spinner"></div>
+    <div>Fetching weather...</div>
+  </div>
   <div v-else-if="error">{{ error }}</div>
-  <div class="current-weather" v-else-if="weather">
-    <img v-if="weatherIconUrl" :src="weatherIconUrl" alt="" weather icon />
-    <div class="weather-info">
-      <h1>{{ city }}</h1>
-      <p>{{ weather.main.temp }} °C</p>
-      <p>{{ weather.weather[0].description }}</p>
+  <div v-else-if="weather">
+    <div class="current-weather">
+      <div class="img-div"> 
+        <img v-if="weatherIconUrl" :src="weatherIconUrl" alt="" weather icon />
+      </div>
+
+      <div class="weather-info">
+        <h1>{{ city }}</h1>
+        <p>{{ weather.main.temp }} °C</p>
+        <p>{{ weather.weather[0].description }}</p>
+      </div>
+    </div>
+    <div v-if="weatherHighlights" class="highlights">
+      <div v-for="item in weatherHighlights" :key="item.label" class="highlight-card">
+        <div class="highlight-icon">{{ item.icon }}</div>
+        <div class="highlight-label">{{ item.label }}</div>
+        <div class="highlight-value">{{ item.value }}</div>
+      </div>
+    </div>
+    <div v-if="hourlyForecast.length" class="hourly-section">
+  <h3 class="section-title">Hourly Forecast</h3>
+
+  <div class="hourly-list">
+    <div
+      v-for="(hour, index) in hourlyForecast"
+      :key="index"
+      class="hourly-card"
+    >
+      <div class="hour-time">
+        {{ new Date(hour.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }}
+      </div>
+
+      <img
+        class="hour-icon"
+        :src="`https://openweathermap.org/img/wn/${hour.icon}@2x.png`"
+        alt="weather icon"
+      />
+
+      <div class="hour-temp">
+        {{ hour.temp }} °C
+      </div>
     </div>
   </div>
+</div>
+
+  </div>
   <div v-else>No data avilable</div>
+
   <Forecast v-if="forecast && !error" :forecast="forecast" />
-<WeatherMap
-  v-if="coords.lat && coords.lon"
-  :lat="coords.lat"
-  :lon="coords.lon"
-/>
+  <WeatherMap v-if="coords.lat && coords.lon" :lat="coords.lat" :lon="coords.lon" />
 
 </template>
 
-<style >
+<style>
 .current-weather {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 24px;
   margin-bottom: 30px;
-  margin-right:100px;
+  margin-right: 100px;
 }
 
-.weather-info h1{
-  margin : 0;
+.weather-info h1 {
+  margin: 0;
   font-size: 28px;
 }
+
 .weather-info .temp {
   font-size: 36px;
   font-weight: bold;
@@ -156,6 +219,7 @@ if(savedTheme){
   opacity: 0.8;
   text-transform: capitalize;
 }
+
 button {
   border-radius: 8px;
   border: 1px solid var(--btn-border);
@@ -168,21 +232,25 @@ button {
   cursor: pointer;
   transition: background-color 0.2s, color 0.2s;
 }
-.input-box{
- padding: 0.75rem;
- border-radius: 10px;
+
+.input-box {
+  padding: 0.75rem;
+  border-radius: 10px;
 }
-.search-div{
- display: flex;
- align-items: center;
- justify-content: center;
- padding: 10px;
- gap: 1rem;
+
+.search-div {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  gap: 1rem;
 }
+
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
+
 .loading {
   display: flex;
   flex-direction: column;
@@ -216,5 +284,110 @@ button:disabled {
   cursor: pointer;
 }
 
+.highlights {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 16px;
+  margin: 30px auto;
+  max-width: 900px;
+}
+
+.highlight-card {
+  background: var(--card-bg);
+  padding: 18px 16px;
+  border-radius: 16px;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.15);
+}
+
+
+.highlight-icon {
+  font-size: 28px;
+  margin-bottom: 10px;
+}
+
+.highlight-label {
+  font-size: 13px;
+  opacity: 0.65;
+  letter-spacing: 0.4px;
+}
+
+.highlight-value {
+  font-size: 20px;
+  font-weight: 600;
+  margin-top: 6px;
+}
+
+.highlight-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+}
+
+.highlights {
+  margin: 40px auto;
+}
+.img-div{
+  background-color: var(--btn-border);
+  border-radius: 20px;
+}
+.hourly-section {
+  margin: 40px auto;
+  max-width: 900px;
+}
+
+.section-title {
+  margin-bottom: 12px;
+  font-size: 18px;
+}
+
+.hourly-list {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.hourly-card {
+  min-width: 90px;
+  background: var(--card-bg);
+  border-radius: 16px;
+  padding: 14px 10px;
+  text-align: center;
+  flex-shrink: 0;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.hourly-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.25);
+}
+
+
+.hour-time {
+  font-size: 12px;
+  opacity: 0.65;
+  margin-bottom: 4px;
+}
+
+.hour-temp {
+  font-size: 16px;
+  font-weight: 600;
+  margin-top: 4px;
+}
+
+
+.hour-icon {
+  width: 48px;
+  height: 48px;
+}
+.hourly-list {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  scroll-behavior: smooth;
+}
 
 </style>

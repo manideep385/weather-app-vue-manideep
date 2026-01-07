@@ -55,7 +55,9 @@ const formatDate = (dateStr)=>{
         <div class="forecast-align">
             <div class="forecast-card" v-for="day in dailyForecast" :key="day.date">
                 <div>{{ formatDate(day.date) }}</div>
+                <div class="img-div">
                 <img :src="`https://openweathermap.org/img/wn/${day.icon}@2x.png`" alt="weather icon" />
+                </div>
                 <div>{{ Math.round(day.temp) }} °C</div>
                 <div>{{ day.description }}</div>
             </div>
@@ -75,5 +77,9 @@ const formatDate = (dateStr)=>{
   border-radius: 8px;
   text-align: center;
   min-width: 120px;
+}
+.img-div{
+  background-color: var(--btn-border);
+  border-radius: 20px;
 }
 </style>
