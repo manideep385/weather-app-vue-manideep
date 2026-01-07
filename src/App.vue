@@ -1,6 +1,7 @@
 <script setup>
 import { ref, onMounted, computed,provide } from 'vue'
 import { getWeatherByCity, getWeatherByCoords, getForecastByCity } from './services/weatherService';
+import WeatherMap from './components/WeatherMap.vue';
 import { watch } from 'vue';
 import Forecast from './components/Forecast.vue';
 const weather = ref(null);
@@ -9,6 +10,10 @@ const error = ref(null)
 const city = ref("Bangalore");
 const forecast = ref(null);
 const theme = ref("dark")
+const coords = ref({
+  lat: null,
+  lon: null
+})
 
 const weatherIconUrl = computed(() => {
   let iconUrl = ''
@@ -21,13 +26,18 @@ const weatherIconUrl = computed(() => {
 
 const searchWeather = async () => {
   error.value = null
-  weather.value = null
   loading.value = true
+
   try {
-    weather.value = await getWeatherByCity(city.value)
+    const result = await getWeatherByCity(city.value)
+    weather.value = result
     forecast.value = await getForecastByCity(city.value)
+
+    coords.value = {
+      lat: result.coord.lat,
+      lon: result.coord.lon
+    }
   } catch (e) {
-    console.log(error)
     error.value = "City not found. Please try again."
   } finally {
     loading.value = false
@@ -35,17 +45,26 @@ const searchWeather = async () => {
 }
 
 const getWeatherByLocation = async () => {
-  loading.value = true;
+  loading.value = true
   error.value = null
+
   navigator.geolocation.getCurrentPosition(
     async (position) => {
       const { latitude, longitude } = position.coords
-      weather.value = await getWeatherByCoords(latitude, longitude)
-      forecast.value = await getForecastByCity(city.value)
+
+      coords.value = {
+        lat: latitude,
+        lon: longitude
+      }
+
+      const result = await getWeatherByCoords(latitude, longitude)
+      weather.value = result
+      city.value = result.name
+      forecast.value = await getForecastByCity(result.name)
+
       loading.value = false
     },
-    (geoError) => {
-      error.value = "Location access denied.showing city weather"
+    () => {
       loading.value = false
       searchWeather()
     }
@@ -105,6 +124,12 @@ if(savedTheme){
   </div>
   <div v-else>No data avilable</div>
   <Forecast v-if="forecast && !error" :forecast="forecast" />
+<WeatherMap
+  v-if="coords.lat && coords.lon"
+  :lat="coords.lat"
+  :lon="coords.lon"
+/>
+
 </template>
 
 <style >
