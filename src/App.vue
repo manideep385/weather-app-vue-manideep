@@ -132,61 +132,62 @@ const hourlyForecast = computed(() => {
     <input v-model="city" @keyup.enter="searchWeather" @input="debouncedSearch" class="input-box" />
     <button :disabled="loading" @click="searchWeather"> {{ loading ? "Loading..." : "Search" }}</button>
   </div>
-  <div v-if="loading" class="loading">
-    <div class="spinner"></div>
-    <div>Fetching weather...</div>
-  </div>
-  <div v-else-if="error">{{ error }}</div>
-  <div v-else-if="weather">
-    <div class="current-weather">
-      <div class="img-div"> 
-        <img v-if="weatherIconUrl" :src="weatherIconUrl" alt="" weather icon />
-      </div>
-
-      <div class="weather-info">
-        <h1>{{ city }}</h1>
-        <p>{{ weather.main.temp }} °C</p>
-        <p>{{ weather.weather[0].description }}</p>
-      </div>
+  <Transition name="fade">
+    <div v-if="loading" class="loading">
+      <div class="spinner"></div>
+      <div>Fetching weather...</div>
     </div>
-    <div v-if="weatherHighlights" class="highlights">
-      <div v-for="item in weatherHighlights" :key="item.label" class="highlight-card">
-        <div class="highlight-icon">{{ item.icon }}</div>
-        <div class="highlight-label">{{ item.label }}</div>
-        <div class="highlight-value">{{ item.value }}</div>
-      </div>
+  </Transition>
+  <Transition name="fade">
+    <div v-if="error" class="error">
+      {{ error }}
     </div>
-    <div v-if="hourlyForecast.length" class="hourly-section">
-  <h3 class="section-title">Hourly Forecast</h3>
+  </Transition>
+  <Transition name="fade-slide" mode="out-in">
+    <div v-if="weather && !error && !loading" key="weather">
 
-  <div class="hourly-list">
-    <div
-      v-for="(hour, index) in hourlyForecast"
-      :key="index"
-      class="hourly-card"
-    >
-      <div class="hour-time">
-        {{ new Date(hour.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }}
+      <div class="current-weather">
+        <div class="img-div">
+          <img v-if="weatherIconUrl" :src="weatherIconUrl" alt="" weather icon />
+        </div>
+
+        <div class="weather-info">
+          <h1>{{ city }}</h1>
+          <p>{{ weather.main.temp }} °C</p>
+          <p>{{ weather.weather[0].description }}</p>
+        </div>
+      </div>
+     <TransitionGroup name="stagger" tag="div" v-if="weatherHighlights" class="highlights">
+        <div v-for="item in weatherHighlights" :key="item.label" class="highlight-card">
+          <div class="highlight-icon">{{ item.icon }}</div>
+          <div class="highlight-label">{{ item.label }}</div>
+          <div class="highlight-value">{{ item.value }}</div>
+        </div>
+      </TransitionGroup>
+      <div v-if="hourlyForecast.length" class="hourly-section">
+        <h3 class="section-title">Hourly Forecast</h3>
+
+        <div class="hourly-list">
+          <div v-for="(hour, index) in hourlyForecast" :key="index" class="hourly-card">
+            <div class="hour-time">
+              {{ new Date(hour.time).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) }}
+            </div>
+
+            <img class="hour-icon" :src="`https://openweathermap.org/img/wn/${hour.icon}@2x.png`" alt="weather icon" />
+
+            <div class="hour-temp">
+              {{ hour.temp }} °C
+            </div>
+          </div>
+        </div>
       </div>
 
-      <img
-        class="hour-icon"
-        :src="`https://openweathermap.org/img/wn/${hour.icon}@2x.png`"
-        alt="weather icon"
-      />
-
-      <div class="hour-temp">
-        {{ hour.temp }} °C
-      </div>
     </div>
-  </div>
-</div>
-
-  </div>
-  <div v-else>No data avilable</div>
+  </Transition>
+  <!-- <div v-else>No data avilable</div> -->
 
   <Forecast v-if="forecast && !error" :forecast="forecast" />
-  <WeatherMap v-if="coords.lat && coords.lon" :lat="coords.lat" :lon="coords.lon" />
+  <WeatherMap v-if="coords.lat && coords.lon && !error" :lat="coords.lat" :lon="coords.lon" />
 
 </template>
 
@@ -265,11 +266,11 @@ button {
     flex-direction: column;
     width: 100%;
   }
-  
+
   .input-box {
     max-width: 100%;
   }
-  
+
   .search-div button {
     width: 100%;
     max-width: 300px;
@@ -381,10 +382,12 @@ button:disabled {
 .highlights {
   margin: 40px auto;
 }
-.img-div{
+
+.img-div {
   background-color: var(--btn-border);
   border-radius: 20px;
 }
+
 .hourly-section {
   margin: 40px auto;
   max-width: 900px;
@@ -450,6 +453,7 @@ button:disabled {
   width: 48px;
   height: 48px;
 }
+
 .hourly-list {
   display: flex;
   gap: 12px;
@@ -457,5 +461,44 @@ button:disabled {
   padding-bottom: 8px;
   scroll-behavior: smooth;
 }
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.25s ease;
+}
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+.fade-slide-enter-active,
+.fade-slide-leave-active {
+  transition: all 0.35s ease;
+}
+.fade-slide-enter-from {
+  opacity: 0;
+  transform: translateY(12px);
+}
+.fade-slide-leave-to {
+  opacity: 0;
+  transform: translateY(-12px);
+}
+
+.stagger-enter-active {
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+.stagger-enter-from {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.stagger-enter-to {
+  opacity: 1;
+  transform: translateY(0);
+}
+.stagger-enter-active {
+  transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
 
 </style>
