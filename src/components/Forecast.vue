@@ -70,7 +70,7 @@ const formatDate = (dateStr)=>{
     justify-content: center;
 }
 .forecast-card {
-  background: #2a2a2a;
+  background: var(--card-bg);
   padding: 10px;
   border-radius: 8px;
   text-align: center;

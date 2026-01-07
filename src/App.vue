@@ -1,12 +1,14 @@
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed,provide } from 'vue'
 import { getWeatherByCity, getWeatherByCoords, getForecastByCity } from './services/weatherService';
+import { watch } from 'vue';
 import Forecast from './components/Forecast.vue';
 const weather = ref(null);
 const loading = ref(true);
 const error = ref(null)
 const city = ref("Bangalore");
-const forecast = ref(null)
+const forecast = ref(null);
+const theme = ref("dark")
 
 const weatherIconUrl = computed(() => {
   let iconUrl = ''
@@ -62,10 +64,32 @@ const  debouncedSearch =()=>{
 onMounted(() => {
   getWeatherByLocation()
 })
+const toggleTheme = ()=>{
+  theme.value= theme.value === "dark" ? "light" :"dark"
+}
+provide("theme",theme)
+provide("toggleTheme",toggleTheme)
 
+watch(theme,(newTheme)=>{
+document.body.setAttribute("data-theme",newTheme)
+localStorage.setItem("theme",newTheme)
+},{immediate:true})
+
+const savedTheme = localStorage.getItem("theme")
+if(savedTheme){
+  theme.value = savedTheme
+}
 </script>
 
 <template>
+  <button class="theme-toggle" @click="toggleTheme">
+  {{ theme === "dark" ? "☀️ Light" : "🌙 Dark" }}
+</button>
+
+   <div class="search-div">
+  <input v-model="city" @keyup.enter="searchWeather" @input="debouncedSearch" class="input-box"/>
+  <button :disabled="loading" @click="searchWeather">  {{ loading ? "Loading..." : "Search" }}</button>
+  </div>
   <div v-if="loading" class="loading">
   <div class="spinner"></div>
   <div>Fetching weather...</div>
@@ -81,11 +105,9 @@ onMounted(() => {
   </div>
   <div v-else>No data avilable</div>
   <Forecast v-if="forecast && !error" :forecast="forecast" />
-  <input v-model="city" @keyup.enter="searchWeather" @input="debouncedSearch" />
-  <button :disabled="loading" @click="searchWeather">  {{ loading ? "Loading..." : "Search" }}</button>
 </template>
 
-<style scoped>
+<style >
 .current-weather {
   display: flex;
   align-items: center;
@@ -108,6 +130,29 @@ onMounted(() => {
   font-size: 16px;
   opacity: 0.8;
   text-transform: capitalize;
+}
+button {
+  border-radius: 8px;
+  border: 1px solid var(--btn-border);
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  cursor: pointer;
+  transition: background-color 0.2s, color 0.2s;
+}
+.input-box{
+ padding: 0.75rem;
+ border-radius: 10px;
+}
+.search-div{
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ padding: 10px;
+ gap: 1rem;
 }
 button:disabled {
   opacity: 0.6;
@@ -135,5 +180,16 @@ button:disabled {
     transform: rotate(360deg);
   }
 }
+
+.theme-toggle {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  cursor: pointer;
+}
+
 
 </style>
