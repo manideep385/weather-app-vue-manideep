@@ -70,6 +70,8 @@ const formatDate = (dateStr)=>{
     display: flex;
     gap: 10px;
     justify-content: center;
+    flex-wrap: wrap;
+    padding: 0 10px;
 }
 .forecast-card {
   background: var(--card-bg);
@@ -77,9 +79,38 @@ const formatDate = (dateStr)=>{
   border-radius: 8px;
   text-align: center;
   min-width: 120px;
+  flex: 1 1 120px;
+  max-width: 150px;
 }
 .img-div{
   background-color: var(--btn-border);
   border-radius: 20px;
+}
+
+@media (max-width: 768px) {
+  .forecast-align {
+    gap: 8px;
+  }
+  
+  .forecast-card {
+    min-width: 100px;
+    flex: 1 1 100px;
+    max-width: 130px;
+    padding: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .forecast-align {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    padding-bottom: 8px;
+  }
+  
+  .forecast-card {
+    min-width: 90px;
+    flex: 0 0 90px;
+  }
 }
 </style>

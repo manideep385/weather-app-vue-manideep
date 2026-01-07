@@ -51,11 +51,25 @@ watch(
 </template>
 
 <style scoped>
-    .map-container {
+.map-container {
   height: 300px;
   width: 100%;
   margin: 20px 0;
   border-radius: 8px;
 }
 
+@media (max-width: 768px) {
+  .map-container {
+    height: 250px;
+    margin: 15px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .map-container {
+    height: 200px;
+    margin: 10px 0;
+    border-radius: 6px;
+  }
+}
 </style>

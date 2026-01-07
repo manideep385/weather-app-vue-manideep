@@ -121,10 +121,6 @@ const hourlyForecast = computed(() => {
     description: item.weather[0].description,
   }))
 })
-watch(hourlyForecast, (val) => {
-  console.log("Hourly forecast:", val)
-})
-
 </script>
 
 <template>
@@ -204,9 +200,23 @@ watch(hourlyForecast, (val) => {
   margin-right: 100px;
 }
 
+@media (max-width: 768px) {
+  .current-weather {
+    flex-direction: column;
+    margin-right: 0;
+    gap: 16px;
+  }
+}
+
 .weather-info h1 {
   margin: 0;
   font-size: 28px;
+}
+
+@media (max-width: 768px) {
+  .weather-info h1 {
+    font-size: 24px;
+  }
 }
 
 .weather-info .temp {
@@ -236,6 +246,8 @@ button {
 .input-box {
   padding: 0.75rem;
   border-radius: 10px;
+  width: 90%;
+  max-width: 350px;
 }
 
 .search-div {
@@ -244,6 +256,24 @@ button {
   justify-content: center;
   padding: 10px;
   gap: 1rem;
+  flex-wrap: wrap;
+  margin-top: 10px;
+}
+
+@media (max-width: 480px) {
+  .search-div {
+    flex-direction: column;
+    width: 100%;
+  }
+  
+  .input-box {
+    max-width: 100%;
+  }
+  
+  .search-div button {
+    width: 100%;
+    max-width: 300px;
+  }
 }
 
 button:disabled {
@@ -284,12 +314,36 @@ button:disabled {
   cursor: pointer;
 }
 
+@media (max-width: 480px) {
+  .theme-toggle {
+    top: 10px;
+    right: 10px;
+    padding: 4px 8px;
+    font-size: 0.85em;
+  }
+}
+
 .highlights {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
   gap: 16px;
   margin: 30px auto;
   max-width: 900px;
+  padding: 0 10px;
+}
+
+@media (max-width: 768px) {
+  .highlights {
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 12px;
+  }
+}
+
+@media (max-width: 480px) {
+  .highlights {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
 }
 
 .highlight-card {
@@ -334,6 +388,13 @@ button:disabled {
 .hourly-section {
   margin: 40px auto;
   max-width: 900px;
+  padding: 0 10px;
+}
+
+@media (max-width: 768px) {
+  .hourly-section {
+    margin: 30px auto;
+  }
 }
 
 .section-title {
@@ -357,6 +418,13 @@ button:disabled {
   flex-shrink: 0;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 480px) {
+  .hourly-card {
+    min-width: 80px;
+    padding: 10px 8px;
+  }
 }
 
 .hourly-card:hover {
